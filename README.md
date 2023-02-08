@@ -6,7 +6,7 @@
 ## **Testbed overview**
 
 ### Vbox networking configuration
-To allow IP addresses 10.0.x.x IP addresses create the following file on host machine `/etc/vbox/networks.conf`.     
+To allow 10.0.x.x IP addresses, create the following file on the host machine: `/etc/vbox/networks.conf`        
 Then add the following entries:
 ```shell
 * 10.0.0.0/24 192.168.0.0/16
