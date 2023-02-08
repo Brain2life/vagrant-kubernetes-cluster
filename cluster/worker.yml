@@ -1,0 +1,16 @@
+---
+- hosts: all:!master
+  become: true
+  tasks:
+
+# -----------------------------
+# WORKER NODE CONFIGURATION
+# -----------------------------
+
+    - name: Create guest_share directory
+      file:
+        path: /home/vagrant/guest_share
+        state: directory
+
+    - name: Join the cluster 
+      shell: sudo sh -c "cat /home/vagrant/guest_share/token | sh"

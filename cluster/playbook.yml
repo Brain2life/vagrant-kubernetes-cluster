@@ -1,0 +1,13 @@
+---
+- name: Install kubeadmin tool
+  hosts:
+    - master
+    - worker
+  become: true
+  tasks:
+    - name: Install kubeadmin tool
+      apt:
+        name: kubeadmin
+        state: present
+      tags:
+        - install-kubeadmin

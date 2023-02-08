@@ -1,0 +1,50 @@
+---
+- hosts: master
+  become: true
+  tasks:
+  
+# -------------------------------
+# INITIALIZE KUBERNETES CLUSTER
+# -------------------------------
+
+    - name: Download required kubeadm images
+      shell: sudo kubeadm config images pull
+
+    - name: Initialize kubeadm
+      command: sudo kubeadm init --apiserver-advertise-address=10.0.0.10  --apiserver-cert-extra-sans=10.0.0.10 --pod-network-cidr 192.168.0.0/16 --node-name master
+      args:
+        creates: /etc/kubernetes/admin.conf
+
+    - name: Create .kube directory
+      file:
+        path: /home/vagrant/.kube
+        state: directory
+
+    - name: Copy Kubernetes admin.conf to user home
+      shell: sudo cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+
+    - name: Change ownership of kube config file
+      shell: sudo chown vagrant:vagrant /home/vagrant/.kube/config
+
+    - name: Set KUBECONFIG variable
+      shell: echo "export KUBECONFIG=/home/vagrant/.kube/config" >> /home/vagrant/.bashrc && source /home/vagrant/.bashrc
+      args:
+        executable: /bin/bash
+
+    - name: Load .bashrc file config
+      shell: . /home/vagrant/.bashrc
+
+    - name: Download Calico manifest file
+      shell: curl https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml -O
+
+    - name: Apply Calico manifest for networking
+      become_user: vagrant
+      command: kubectl apply -f calico.yaml
+
+    - name: Create guest_share directory
+      file:
+        path: /home/vagrant/guest_share
+        state: directory
+
+    - name: Create token file in guest_share folder
+      shell: kubeadm token create --print-join-command > /home/vagrant/guest_share/token

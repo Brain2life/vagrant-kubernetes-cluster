@@ -1,0 +1,67 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  # Configure shared folder between host machine and VMs
+  config.vm.synced_folder "./host_share", "/home/vagrant/guest_share", :create => true
+
+  # Master node
+  config.vm.define "master" do |master|
+    master.vm.box = "ubuntu/focal64"
+    master.vm.hostname = "master"
+    master.vm.network "private_network", ip: "10.0.0.10"
+    master.vm.provider :virtualbox do |vb|
+      vb.name = "master"
+      vb.memory = 6144
+    end
+
+    # Ansible provisioner
+    master.vm.provision :ansible do |ansible|
+      ansible.playbook = "hosts.yml"
+    end
+
+    # Ansible provisioner
+    master.vm.provision :ansible do |ansible|
+      ansible.playbook = "common.yml"
+    end
+
+    # Ansible provisioner
+    master.vm.provision :ansible do |ansible|
+      ansible.playbook = "master.yml"
+    end
+
+  end
+
+
+  # Worker nodes  
+  (1..2).each do |i|
+
+    config.vm.define "worker#{i}" do |worker|
+      worker.vm.box = "ubuntu/focal64"
+      worker.vm.hostname = "worker#{i}"
+      worker.vm.network "private_network", ip: "10.0.0.1#{i}"
+      worker.vm.provider "virtualbox" do |vb|
+          vb.name = "worker#{i}"
+          vb.memory = 4096
+      end
+
+      # Ansible provisioner
+      worker.vm.provision :ansible do |ansible|
+        ansible.playbook = "hosts.yml"
+      end
+
+      # Ansible provisioner
+      worker.vm.provision :ansible do |ansible|
+        ansible.playbook = "common.yml"
+      end
+
+      # Ansible provisioner
+      worker.vm.provision :ansible do |ansible|
+        ansible.playbook = "worker.yml"
+      end
+    end
+
+  end
+
+end
