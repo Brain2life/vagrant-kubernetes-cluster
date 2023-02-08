@@ -20,7 +20,7 @@ Then add the following entries:
 
 ### Vagrant VMs
 1. Container runtime [cri-o](https://cri-o.io/)
-2. Kubernetes version == 1.26.1. If required you can specify specific version via `--kubernetes-version [version]` option for `kubeadm` command
+2. Kubernetes version == 1.26.1. If required you can specify version via `--kubernetes-version [version]` option for `kubeadm` command
 3. Calico network plugin from [https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml](https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml)
 
 Join tokens are obtained via shared folders:
