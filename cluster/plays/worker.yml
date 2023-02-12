@@ -3,10 +3,15 @@
   become: true
   tasks:
 
+# -------------------------------
+# IMPORTS
+# -------------------------------
+    - import_tasks: hosts.yml
+    - import_tasks: common.yml
+
 # -----------------------------
 # WORKER NODE CONFIGURATION
 # -----------------------------
-
     - name: Create guest_share directory
       file:
         path: /home/vagrant/guest_share

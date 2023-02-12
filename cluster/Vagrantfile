@@ -18,17 +18,7 @@ Vagrant.configure("2") do |config|
 
     # Ansible provisioner
     master.vm.provision :ansible do |ansible|
-      ansible.playbook = "hosts.yml"
-    end
-
-    # Ansible provisioner
-    master.vm.provision :ansible do |ansible|
-      ansible.playbook = "common.yml"
-    end
-
-    # Ansible provisioner
-    master.vm.provision :ansible do |ansible|
-      ansible.playbook = "master.yml"
+      ansible.playbook = "./plays/master.yml"
     end
 
   end
@@ -48,17 +38,7 @@ Vagrant.configure("2") do |config|
 
       # Ansible provisioner
       worker.vm.provision :ansible do |ansible|
-        ansible.playbook = "hosts.yml"
-      end
-
-      # Ansible provisioner
-      worker.vm.provision :ansible do |ansible|
-        ansible.playbook = "common.yml"
-      end
-
-      # Ansible provisioner
-      worker.vm.provision :ansible do |ansible|
-        ansible.playbook = "worker.yml"
+        ansible.playbook = "./plays/worker.yml"
       end
     end
 

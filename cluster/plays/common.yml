@@ -1,0 +1,172 @@
+---
+# ---------------------------
+# COMMON CONFIG OPERATIONS
+# ---------------------------
+
+- name: Create crio.conf file
+  file:
+    path: "/etc/modules-load.d/crio.conf"
+    state: touch
+
+- name: Add kernel modules
+  lineinfile:
+    path: /etc/modules-load.d/crio.conf
+    line: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: Create 99-kubernetes-cri.conf file
+  file:
+    path: "/etc/sysctl.d/99-kubernetes-cri.conf"
+    state: touch
+
+- name: Configure Kubernetes CRI
+  lineinfile:
+    dest: /etc/sysctl.d/99-kubernetes-cri.conf
+    line: "{{ item.net }}"
+  with_items:
+    - { net: "net.bridge.bridge-nf-call-iptables  = 1" }
+    - { net: "net.ipv4.ip_forward                 = 1" }
+    - { net: "net.bridge.bridge-nf-call-ip6tables = 1" }
+
+- name: Load overlay module
+  become: yes
+  become_user: root
+  command: sudo modprobe overlay
+
+- name: Load br_netfilter module
+  become: yes
+  become_user: root
+  command: sudo modprobe br_netfilter
+
+- name: Reload config file
+  become: yes
+  become_user: root
+  command: sudo sysctl --system
+
+# ---------------------------------------------------
+# CRI-O RUNTIME INSTALLATION AND CONFIGURATION
+# ---------------------------------------------------
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Create sources list file
+  become: true
+  copy:
+    content: |
+      deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/ /
+    dest: /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Add entry to sources list file
+  become: true
+  copy:
+    content: |
+      deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.23/xUbuntu_20.04/ /
+    dest: /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:crio:1.23.list
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Disable swap
+  command: sudo swapoff -a
+
+# ----------------------
+# INSTALL KUBERNETES
+# ----------------------
+
+- name: Add libcontainers release key
+  become: true
+  shell: curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:1.23/xUbuntu_20.04/Release.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/libcontainers.gpg add -
+
+- name: Add libcontainers.gpg to apt keyring
+  become: true
+  shell: curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/Release.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/libcontainers.gpg add -
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+
+- name: Install cri-o, cri-o-runc, cri-tools
+  become: true
+  apt:
+    name:
+      - cri-o
+      - cri-o-runc
+      - cri-tools
+    state: present
+    update_cache: yes
+    force: yes
+    install_recommends: no
+    allow_unauthenticated: yes
+
+
+- name: Reload systemctl daemon
+  become: yes
+  command: systemctl daemon-reload
+
+- name: Enable crio
+  become: yes
+  command: systemctl enable crio --now
+
+- name: Update and install apt-transport-https curl
+  become: true
+  apt:
+    update_cache: yes
+    name: [apt-transport-https, curl]
+    state: present
+
+- name: Add GPG key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Create kubernetes.list file
+  file:
+    path: "/etc/apt/sources.list.d/kubernetes.list"
+    state: touch
+
+- name: Configure kubernetes sources list
+  become: yes
+  become_user: root
+  lineinfile:
+    path: /etc/apt/sources.list.d/kubernetes.list
+    state: present
+    line: deb https://apt.kubernetes.io/ kubernetes-xenial main
+
+- name: Update apt package list
+  apt:
+    update_cache: yes
+
+- name: Install Kubernetes components
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: yes
+    force: yes
+    allow_unauthenticated: yes
+
+- name: Hold kubelet kubeadm kubectl
+  ansible.builtin.dpkg_selections:
+    name: kubelet 
+    selection: hold
+
+- name: Hold kubelet kubeadm kubectl
+  ansible.builtin.dpkg_selections:
+    name: kubeadm 
+    selection: hold
+
+- name: Hold kubelet kubeadm kubectl
+  ansible.builtin.dpkg_selections:
+    name: kubectl
+    selection: hold

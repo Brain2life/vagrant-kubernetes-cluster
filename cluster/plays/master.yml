@@ -4,9 +4,14 @@
   tasks:
   
 # -------------------------------
+# IMPORTS
+# -------------------------------
+    - import_tasks: hosts.yml
+    - import_tasks: common.yml
+
+# -------------------------------
 # INITIALIZE KUBERNETES CLUSTER
 # -------------------------------
-
     - name: Download required kubeadm images
       shell: sudo kubeadm config images pull
 
